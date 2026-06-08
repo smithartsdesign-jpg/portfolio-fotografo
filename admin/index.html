@@ -1,14 +1,69 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gerenciador de Conteúdo - RC Sport</title>
-    <!-- Inclui o widget de identidade para login -->
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  </head>
-  <body>
-    <!-- O script do CMS precisa estar no body para carregar a interface -->
-    <script src="https://unpkg.com/decap-cms@^3.1.2/dist/decap-cms.js"></script>
-  </body>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Fotógrafo - RC Sport</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div id="login-container" class="container">
+        <div class="card">
+            <h2>Acesso Restrito</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" id="btn-login" class="btn primary">Entrar</button>
+            </form>
+            <p id="login-error" class="error-msg"></p>
+        </div>
+    </div>
+
+    <div id="dashboard-container" class="container" style="display: none;">
+        <div class="card wide">
+            <div class="header">
+                <h2>Suas Fotos</h2>
+                <button id="btn-logout" class="btn secondary">Sair</button>
+            </div>
+            
+            <div class="upload-section">
+                <h3>Adicionar Nova Foto</h3>
+                <form id="upload-form">
+                    <div class="form-group">
+                        <label>Título (ex: Ação, Foco, Bastidores)</label>
+                        <input type="text" id="photo-title" required placeholder="Digite um título curto">
+                    </div>
+                    <div class="form-group file-group">
+                        <label for="photo-file" class="file-label">Escolher Imagem</label>
+                        <input type="file" id="photo-file" accept="image/png, image/jpeg, image/webp" required>
+                        <span id="file-name">Nenhum arquivo escolhido</span>
+                    </div>
+                    <button type="submit" id="btn-upload" class="btn primary">Fazer Upload e Publicar</button>
+                </form>
+                <div id="upload-progress-container" style="display: none;">
+                    <div class="progress-bar"><div id="upload-progress"></div></div>
+                    <p id="upload-status">Enviando...</p>
+                </div>
+            </div>
+
+            <div class="gallery-list">
+                <h3>Fotos Publicadas (Portfólio)</h3>
+                <ul id="photos-list">
+                    <!-- Fotos aparecerão aqui -->
+                    <p class="loading-text">Carregando fotos...</p>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module" src="admin.js"></script>
+</body>
 </html>

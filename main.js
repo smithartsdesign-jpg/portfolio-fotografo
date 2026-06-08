@@ -2,6 +2,29 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
+// === COLE O SEU FIREBASE CONFIG AQUI TAMBÉM ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCRAqIwiuer6yP6fu63_8ZC8E098jJv6n8",
+  authDomain: "portfolio-fotografo.firebaseapp.com",
+  projectId: "portfolio-fotografo",
+  storageBucket: "portfolio-fotografo.firebasestorage.app",
+  messagingSenderId: "1057756685221",
+  appId: "1:1057756685221:web:3a81cfd0862b3792e5be4c",
+  measurementId: "G-CVSFDJ478V"
+};
+
+let db;
+if (firebaseConfig.apiKey !== "COLE_AQUI") {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+}
+// ==============================================
+
+
+
 // Variavel global para o grupo da câmera principal
 let mainCameraGroup = null;
 
@@ -303,14 +326,22 @@ function setupScrollAnimations(g1, g2, particles) {
     // O Flash se dissipa lentamente e revela a nova cena, ficando borrado novamente
     tlPortfolio.to('#flash', { opacity: 0, filter: "blur(20px)", duration: 0.8, ease: "power2.out" });
 
-    // 2. ROLAGEM HORIZONTAL E APARECIMENTO DAS POLAROIDS VIA CMS (JSON)
+    // 2. ROLAGEM HORIZONTAL E APARECIMENTO DAS POLAROIDS VIA FIREBASE
     const galleryGrid = document.querySelector('.gallery-grid');
 
-    fetch('data/portfolio.json')
-        .then(response => response.json())
-        .then(data => {
+    async function carregarPortfolio() {
+        if (!db) {
+            console.error("Firebase não configurado. Galeria não será carregada.");
+            return;
+        }
+
+        try {
+            const q = query(collection(db, "portfolio"), orderBy("createdAt", "desc"));
+            const querySnapshot = await getDocs(q);
+            
             // Criar e injetar as fotos no HTML
-            data.items.forEach(item => {
+            querySnapshot.forEach((doc) => {
+                const item = doc.data();
                 const div = document.createElement('div');
                 div.className = 'gallery-item';
                 div.style.backgroundImage = `url('${item.image}')`;
@@ -392,8 +423,13 @@ function setupScrollAnimations(g1, g2, particles) {
                 });
             });
 
-        })
-        .catch(err => console.error("Erro ao carregar fotos do CMS:", err));
+        } catch (error) {
+            console.error("Erro ao carregar do Firebase:", error);
+        }
+    }
+    
+    // Executa a função
+    carregarPortfolio();
 
     // Parallax da foto do About no scroll (A imagem se move dentro do contêiner)
     gsap.to('.about-image img', {
