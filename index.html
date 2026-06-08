@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfólio Fotográfico | Experiência Cinematográfica</title>
+    <meta name="description" content="Portfólio de fotografia high-end com uma experiência visual imersiva e cinematográfica.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Netlify Identity Widget para o Decap CMS -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+
+    <!-- Parallax Background -->
+    <div id="parallax-bg"></div>
+
+    <!-- 3D Canvas Background -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- FLASH OVERLAY -->
+    <div id="flash" class="flash-overlay"></div>
+
+    <!-- Main Content Overlay -->
+    <main class="content-wrapper">
+        
+        <!-- HERO SECTION -->
+        <section class="hero" id="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="filled-text">A Emoção do Jogo</span><br>
+                    <span class="animating-text">Capturada</span>
+                </h1>
+                <p class="hero-subtitle">Role para entrar na galeria</p>
+            </div>
+            <!-- The person holding the camera could be a background image here, or purely 3D depending on the 3D model. We will use a dramatic dark background. -->
+        </section>
+
+        <!-- LENS TRANSITION SPACER -->
+        <section class="transition-spacer" id="transition-spacer">
+            <div class="depth-title-wrapper">
+                <h2 class="depth-title top-text">No Centro</h2>
+                <h2 class="depth-title bottom-text green-text">do Campo</h2>
+            </div>
+            <img src="assets/rodrigo/no centro do campo.png" alt="Fotógrafo em Ação" class="photographer-part2">
+        </section>
+
+        <!-- PORTFOLIO GALLERY -->
+        <section class="portfolio" id="portfolio">
+            <div class="portfolio-header">
+                <h2>Trabalhos Recentes</h2>
+                <p>Capturando a energia e a emoção do esporte</p>
+            </div>
+            <div class="gallery-grid" id="gallery-grid">
+                <!-- Gallery items will be populated dynamically via JavaScript (from data/portfolio.json) -->
+            </div>
+        </section>
+
+        <!-- ABOUT SECTION -->
+        <section class="about" id="about">
+            <div class="about-grid">
+                <div class="about-image">
+                    <img src="assets/rodrigo/sobre.webp" alt="O Fotógrafo">
+                </div>
+                <div class="about-text">
+                    <h2>Sobre o Artista</h2>
+                    <p>A fotografia é mais do que capturar luz; é sobre eternizar emoções. Com mais de 10 anos de experiência, minha missão é contar a sua história através de uma perspectiva cinematográfica, transformando instantes efêmeros em memórias visuais inesquecíveis.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CALL TO ACTION -->
+        <section class="cta" id="cta">
+            <img src="assets/fotos recortes/FOTO CTA.png" alt="Fotógrafo CTA" class="photographer-cta">
+            <div class="cta-content">
+                <h2 class="cta-title">
+                    <span class="word">Vamos</span> 
+                    <span class="word">capturar</span> 
+                    <span class="word">seu</span> 
+                    <span class="word">momento?</span>
+                </h2>
+                <button class="btn-primary">Agendar Sessão</button>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h3>Portfólio</h3>
+                    <p>contact@fotografo.com</p>
+                    <p>+55 11 99999-9999</p>
+                </div>
+                <div class="footer-social">
+                    <a href="#">Instagram</a>
+                    <a href="#">Behance</a>
+                    <a href="#">Vimeo</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Fotógrafo. Todos os direitos reservados.</p>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- Dependencies: Three.js and Loaders via ES Modules -->
+    <!-- Important: Use type="importmap" to resolve bare specifiers -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <!-- GSAP for scroll animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/ScrollTrigger.min.js"></script>
+
+    <!-- Main Logic -->
+    <script type="module" src="main.js"></script>
+    
+    <!-- Redirecionamento automático de Login do Netlify Identity -->
+    <script>
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", user => {
+          if (!user) {
+            window.netlifyIdentity.on("login", () => {
+              document.location.href = "/admin/";
+            });
+          }
+        });
+      }
+    </script>
+</body>
+</html>

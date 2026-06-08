@@ -1,0 +1,617 @@
+/* =========================================
+   VARIABLES & RESET
+   ========================================= */
+:root {
+    --bg-color: #031006; /* Dark green/stadium grass base */
+    --text-color: #f0f0f0;
+    --accent-color: #1a1a1a;
+    --highlight: #ffffff;
+    --font-primary: 'Outfit', sans-serif;
+    --z-background: 1;
+    --z-canvas: 5;
+    --z-foreground: 10;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: auto; /* Handled by GSAP if needed, smooth scroll might conflict */
+    overflow-x: hidden;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+/* =========================================
+   TYPOGRAPHY
+   ========================================= */
+h1, h2, h3 {
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+h2 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    margin-bottom: 1rem;
+}
+
+p {
+    color: #a0a0a0;
+    font-size: 1.1rem;
+    max-width: 600px;
+}
+
+/* =========================================
+   LAYOUT & CANVAS
+   ========================================= */
+/* The canvas stays fixed in the background */
+#webgl-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: var(--z-canvas);
+    pointer-events: none; /* Let clicks pass through to content */
+}
+
+/* Fundo Parallax 3D com a imagem do estádio (Pode trocar para grass_texture.png para testar) */
+#parallax-bg {
+    position: fixed;
+    top: -5%; /* Margem para o parallax */
+    left: -5%;
+    width: 110vw; /* Um pouco maior para permitir movimento */
+    height: 110vh;
+    background-image: 
+        linear-gradient(rgba(3, 16, 6, 0.7), rgba(3, 16, 6, 0.95)),
+        url('assets/hero-bg.jpeg');
+        /* Para testar apenas a grama, comente a linha acima e use: */
+        /* url('assets/grass_texture.png'); */
+    background-size: cover;
+    background-position: center;
+    z-index: 0; /* Bem no fundo, atrás de tudo */
+    pointer-events: none;
+    transform-origin: center center;
+}
+
+.content-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* =========================================
+   SECTIONS
+   ========================================= */
+section {
+    position: relative;
+    padding: 5rem 10%;
+    z-index: var(--z-foreground); /* Por padrão, na frente do canvas */
+}
+
+/* FLASH OVERLAY */
+.flash-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: #ffffff;
+    opacity: 0;
+    z-index: 9999;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    filter: blur(10px);
+}
+
+/* HERO */
+.hero {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 20vh;
+    pointer-events: none; /* Avoid blocking scroll */
+}
+
+.hero-title {
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    position: relative;
+    line-height: 1.1;
+}
+
+.filled-text {
+    color: var(--highlight); /* Branco sólido padrão, já preenchido */
+}
+
+.animating-text {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(0, 255, 102, 0.2); /* Borda inicial verde */
+    /* EFEITO DE PREENCHIMENTO */
+    background-image: linear-gradient(to top, #00ff66 50%, transparent 50%);
+    background-size: 100% 200%;
+    background-position: 0% 0%; /* Inicia vazado */
+    -webkit-background-clip: text;
+    background-clip: text;
+    filter: drop-shadow(0px 0px 0px rgba(0, 255, 102, 0)); /* Preparado para o Glow Verde do GSAP */
+}
+
+.hero-subtitle {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 300;
+}
+
+/* TRANSITION SPACER */
+/* Controla o tempo de scroll da câmera 3D */
+.transition-spacer {
+    position: relative;
+    height: 100vh; /* Reduzido de 250vh para 100vh para a animação acontecer muito mais rápido */
+    z-index: var(--z-background); /* 1, Canvas é 5 */
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Centraliza o texto perfeitamente */
+    overflow: hidden; /* Evita que a foto parallax vaze */
+}
+
+/* FOTO PART2 (Fotógrafo tirando foto do texto) */
+.photographer-part2 {
+    position: absolute;
+    bottom: -5%;
+    left: -5%; /* Bem no canto esquerdo */
+    width: 40vw; /* Menor que antes */
+    max-width: 500px;
+    z-index: 1; /* Fica atrás do texto agora */
+    pointer-events: none;
+    opacity: 0.95;
+    /* Máscara de gradiente agressiva para ter certeza que apaga a borda dura, mesmo se tiver espaço em branco no PNG */
+    -webkit-mask-image: linear-gradient(to top, transparent 0%, transparent 10%, black 45%);
+    mask-image: linear-gradient(to top, transparent 0%, transparent 10%, black 45%);
+}
+
+.depth-title-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.depth-title {
+    margin: 0;
+    font-size: clamp(4rem, 12vw, 15rem);
+    text-transform: uppercase;
+    font-weight: 800;
+    color: transparent;
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.05); /* Outline sutil */
+    text-align: center;
+    line-height: 0.85;
+
+    /* EFEITO DE PREENCHIMENTO DE BAIXO PRA CIMA */
+    background-image: linear-gradient(to top, #ffffff 50%, transparent 50%);
+    background-size: 100% 200%;
+    background-position: 0% 0%; /* Inicia revelando a parte transparente (topo) do gradiente */
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+@media (max-width: 768px) {
+    .depth-title {
+        font-size: clamp(3rem, 15vw, 6rem); /* Permite encolher mais no celular */
+        word-break: break-word; /* Evita cortar a palavra CENTRO */
+    }
+}
+
+.top-text {
+    position: relative;
+    z-index: 3; /* Fica na frente da foto */
+}
+
+.bottom-text {
+    position: relative;
+    z-index: 0; /* Fica atrás da foto */
+}
+
+/* NOVA CLASSE VERDE PARA O FUTEBOL */
+.green-text {
+    background-image: linear-gradient(to top, #00ff66 50%, transparent 50%);
+    background-size: 100% 200%;
+    background-position: 0% 0%; /* Anima junto com a principal */
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 2px rgba(0, 255, 102, 0.1);
+    /* GSAP fará o glow acender lentamente com o scroll */
+    filter: drop-shadow(0px 0px 0px rgba(0, 255, 102, 0));
+}
+
+/* PORTFOLIO */
+.portfolio {
+    /* Removido o background-color escuro que causava a linha de corte */
+    margin-top: -40vh; /* Sobrepõe o espaço final da transição para evitar o buraco branco */
+    z-index: 20;
+    color: #111;
+    padding-top: 10rem;
+    perspective: 1500px; /* Ativa o ambiente 3D para as fotos */
+    overflow: hidden;
+    position: relative;
+    /* Começa desfocado e invisível para o efeito de Focus Pull e Flash */
+    filter: blur(30px);
+    opacity: 0;
+    padding-bottom: 2rem; /* Reduz o espaço embaixo do portfolio */
+}
+
+.portfolio-header {
+    margin-bottom: 4rem;
+    position: relative;
+    z-index: 50;
+    transform: translateZ(200px); /* Garante que o texto fique ACIMA das polaroids 3D */
+    pointer-events: none; /* Para não bloquear cliques nas fotos */
+}
+
+.portfolio-header h2 {
+    color: #111;
+}
+
+.portfolio-header p {
+    color: #555;
+}
+
+.gallery-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 4rem; /* Espaço entre fotos horizontais */
+    transform-style: preserve-3d;
+    padding: 2rem 10vw 2rem 5vw; /* Dá um respiro lateral na rolagem */
+    width: max-content; /* Permite esticar de acordo com as fotos */
+    will-change: transform; /* Otimização para a rolagem lateral */
+}
+
+.gallery-item {
+    position: relative;
+    width: 320px;
+    height: 380px;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.3); /* Drop shadow super forte para profundidade */
+    /* Estado inicial 3D escondido (será animado pelo GSAP) */
+    opacity: 0;
+    flex-shrink: 0; /* Impede as fotos de serem espremidas na mesma linha */
+    
+    /* EFEITO POLAROID */
+    border: 15px solid #ffffff;
+    border-bottom: 75px solid #ffffff;
+    background-color: #eee;
+    border-radius: 2px;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease, filter 0.4s ease;
+    will-change: transform, filter;
+}
+
+/* Sombra interna para dar realismo à foto no polaroid */
+.gallery-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.15);
+    pointer-events: none;
+}
+
+.gallery-overlay {
+    position: absolute;
+    bottom: -65px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    background: transparent;
+    opacity: 1; /* Sempre visível, é o texto do polaroid */
+}
+
+.gallery-item:hover {
+    transform: scale(1.05) translateY(-10px) translateZ(30px) !important;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+    filter: brightness(1.1) contrast(1.05);
+    z-index: 10;
+}
+
+.gallery-overlay h3 {
+    color: #333;
+    font-size: 1.8rem;
+    font-family: 'Caveat', cursive; /* Fonte manuscrita */
+    margin-bottom: 0;
+}
+
+.gallery-overlay span {
+    display: none; /* Esconde texto desnecessário no polaroid */
+}
+
+/* ABOUT */
+.about {
+    background-color: transparent; /* Remove o corte seco de cor */
+    color: #111;
+    padding: 0rem 10% 8rem; /* Reduzido o topo para colar mais no portfolio */
+    position: relative;
+    z-index: 10;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem; /* Aumentado para respirar melhor */
+    align-items: center;
+}
+
+/* Criatividade na Foto: Efeito Viewfinder (Câmera) e Preto & Branco */
+.about-image {
+    position: relative;
+    aspect-ratio: 3/4; /* Força a proporção elegante para fotos de retrato */
+    overflow: hidden;
+    border-radius: 8px; /* Leve arredondamento mais premium que o antigo */
+    box-shadow: 0 30px 60px rgba(0,0,0,0.15); /* Sombra macia e profunda */
+}
+
+.about-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Corrige qualquer distorção na foto original */
+    filter: grayscale(100%) contrast(1.1); /* Dramático em Preto e Branco */
+    transition: filter 1s ease, transform 1.5s ease;
+}
+
+/* Interação com o mouse: Revela as cores e aproxima sutilmente */
+.about-image:hover img {
+    filter: grayscale(0%) contrast(1);
+    transform: scale(1.05);
+}
+
+/* Elemento ::after criando as 'cruzes' de mira de uma câmera no canto da foto */
+.about-image::after {
+    content: '';
+    position: absolute;
+    inset: 15px; /* Distância da borda interna */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Borda muito fina */
+    pointer-events: none;
+    z-index: 2;
+    /* Desenhando os cantos da mira da câmera usando gradientes */
+    background: 
+        linear-gradient(to right, #ffffff 2px, transparent 2px) 0 0,
+        linear-gradient(to bottom, #ffffff 2px, transparent 2px) 0 0,
+        linear-gradient(to left, #ffffff 2px, transparent 2px) 100% 0,
+        linear-gradient(to bottom, #ffffff 2px, transparent 2px) 100% 0,
+        linear-gradient(to right, #ffffff 2px, transparent 2px) 0 100%,
+        linear-gradient(to top, #ffffff 2px, transparent 2px) 0 100%,
+        linear-gradient(to left, #ffffff 2px, transparent 2px) 100% 100%,
+        linear-gradient(to top, #ffffff 2px, transparent 2px) 100% 100%;
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    opacity: 0.8;
+}
+
+.about-text h2 {
+    color: #111;
+}
+
+.about-text p {
+    color: #555;
+}
+
+/* CTA */
+.cta {
+    padding: 10rem 10%; /* Ajuste de espaçamento lateral */
+    text-align: left; /* Tira do centro para criar um layout de revista */
+    background-color: #f4f4f5; /* Tema Claro */
+    color: #111;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    min-height: 60vh; /* Altura mínima para a foto ter espaço de sobra */
+}
+
+/* FOTO CTA (Aparecendo do rodapé) */
+.photographer-cta {
+    position: absolute;
+    bottom: 0; /* Grudado no rodapé */
+    right: 5%; /* Alinhado à direita */
+    height: 100%; /* Pega a altura toda da seção */
+    width: auto; /* Mantém a proporção */
+    z-index: 20; /* Fica na frente do texto para as palavras saírem de trás dele! */
+    pointer-events: none;
+    opacity: 1; /* Removido a transparência para ele aparecer de verdade! */
+}
+
+.cta-content {
+    position: relative;
+    z-index: 30; /* Fica na frente da foto para não sumir no mobile */
+    max-width: 500px;
+    margin: 0; /* Tira o alinhamento central */
+}
+
+.cta-title .word {
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(145deg, #2a2a2a, #111111);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 50px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 5px 15px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.8);
+    transition: all 0.3s ease;
+    margin-top: 2rem;
+}
+
+/* Efeito de Reflexo Metálico (Luz passando pelo botão) */
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-25deg);
+    animation: metalSweep 4s infinite;
+}
+
+@keyframes metalSweep {
+    0% { left: -100%; }
+    15% { left: 200%; }
+    100% { left: 200%; } /* Pausa entre os brilhos */
+}
+
+/* Hover brilhante */
+.btn-primary:hover {
+    box-shadow: 
+        0 0 20px rgba(0, 255, 102, 0.4), /* Glow Verde no fundo */
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.8);
+    border-color: #00ff66; /* Edge brilhante verde */
+    transform: translateY(-2px);
+}
+
+/* FOOTER */
+.footer {
+    padding: 4rem 10% 2rem;
+    background-color: var(--accent-color);
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+}
+
+.footer-info h3 {
+    margin-bottom: 1rem;
+}
+
+.footer-social {
+    display: flex;
+    gap: 2rem;
+}
+
+.footer-social a {
+    color: var(--text-color);
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+
+.footer-social a:hover {
+    color: #888;
+}
+
+.footer-bottom {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #666;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    section {
+        padding: 4rem 5%;
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 12vw, 4rem);
+    }
+
+    .photographer-part2 {
+        width: 80vw; /* Fica maior no celular para não parecer que está flutuando */
+        bottom: -2%; /* Gruda no rodapé da seção */
+        left: -15%;
+        -webkit-mask-image: linear-gradient(to top, transparent 0%, transparent 5%, black 20%); /* Suaviza a base no mobile */
+        mask-image: linear-gradient(to top, transparent 0%, transparent 5%, black 20%);
+    }
+
+    .about-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+    
+    .portfolio {
+        padding-top: 6rem; /* Dá espaço para não encavalar */
+    }
+
+    .portfolio-header {
+        margin-bottom: 6rem;
+    }
+
+    .gallery-item {
+        width: 100%; /* Ocupa 100% no celular */
+        max-width: 320px; /* Mas não estoura */
+    }
+
+    .gallery-item:nth-child(2),
+    .gallery-item:nth-child(5) {
+        grid-column: span 1;
+        grid-row: span 1;
+    }
+    
+    .cta {
+        display: flex;
+        flex-direction: column-reverse; /* Foto fica embaixo do texto no mobile */
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 5rem 5% 0 5%; /* Zera o padding inferior para a foto grudar no footer */
+    }
+
+    .cta-content {
+        margin: 0 auto;
+        padding-bottom: 3rem;
+        z-index: 30;
+    }
+
+    .photographer-cta {
+        position: relative !important; /* Força sobrescrever o absolute */
+        height: auto !important;
+        width: 100% !important;
+        max-width: 380px;
+        right: auto !important;
+        bottom: auto !important;
+        margin: 0 auto;
+        z-index: 10 !important;
+        display: block;
+    }
+    
+    .footer-content {
+        flex-direction: column;
+        gap: 2rem;
+    }
+}
