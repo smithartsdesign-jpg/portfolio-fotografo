@@ -1,24 +1,25 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-// FIREBASE CONFIG
+// FIREBASE CONFIG (Sem Storage)
 const firebaseConfig = {
   apiKey: "AIzaSyCRAqIwiuer6yP6fu63_8ZC8E098jJv6n8",
   authDomain: "portfolio-fotografo.firebaseapp.com",
   projectId: "portfolio-fotografo",
-  storageBucket: "portfolio-fotografo.firebasestorage.app",
+  storageBucket: "portfolio-fotografo.firebasestorage.app", // Mantido apenas por padrão
   messagingSenderId: "1057756685221",
   appId: "1:1057756685221:web:3a81cfd0862b3792e5be4c",
   measurementId: "G-CVSFDJ478V"
 };
 
+// ImgBB API Key
+const IMGBB_API_KEY = "2e3f55b6fd727257f5c5ce7b5569b58d";
+
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 // DOM Elements
 const loginContainer = document.getElementById('login-container');
@@ -95,6 +96,30 @@ photoFile.addEventListener('change', (e) => {
     }
 });
 
+// --- FUNÇÃO DE UPLOAD PARA IMGBB ---
+async function uploadToImgBB(file, onProgress) {
+    const formData = new FormData();
+    formData.append("image", file);
+    
+    // Imitação de progresso já que o fetch normal não suporta onProgress nativo fácil
+    if(onProgress) onProgress(30); 
+
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+        method: 'POST',
+        body: formData
+    });
+    
+    if(onProgress) onProgress(80);
+
+    const result = await response.json();
+    if (result.success) {
+        if(onProgress) onProgress(100);
+        return result.data.url;
+    } else {
+        throw new Error(result.error.message || "Erro desconhecido no ImgBB");
+    }
+}
+
 // --- UPLOAD LOGIC ---
 uploadForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -107,37 +132,27 @@ uploadForm.addEventListener('submit', async (e) => {
     btnUpload.disabled = true;
     progressContainer.style.display = 'block';
     
-    const fileRef = ref(storage, `portfolio/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(fileRef, file);
+    try {
+        progressStatus.innerText = 'Enviando imagem para ImgBB...';
+        const imageUrl = await uploadToImgBB(file, (percent) => {
+            progressBar.style.width = percent + '%';
+        });
 
-    uploadTask.on('state_changed', 
-        (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            progressBar.style.width = progress + '%';
-            progressStatus.innerText = `Enviando... ${Math.round(progress)}%`;
-        }, 
-        (error) => {
-            alert("Erro no upload: " + error.message);
-            resetUploadForm();
-        }, 
-        async () => {
-            progressStatus.innerText = 'Salvando no banco de dados...';
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            
-            try {
-                await addDoc(collection(db, "portfolio"), {
-                    title: title,
-                    image: downloadURL,
-                    createdAt: new Date()
-                });
-                resetUploadForm();
-                loadPhotos();
-            } catch (error) {
-                alert("Erro ao salvar no banco: " + error.message);
-                resetUploadForm();
-            }
-        }
-    );
+        progressStatus.innerText = 'Salvando dados no Firebase...';
+        
+        await addDoc(collection(db, "portfolio"), {
+            title: title,
+            image: imageUrl,
+            createdAt: new Date()
+        });
+
+        resetUploadForm();
+        loadPhotos();
+
+    } catch (error) {
+        alert("Erro ao publicar foto: " + error.message);
+        resetUploadForm();
+    }
 });
 
 function resetUploadForm() {
@@ -177,7 +192,7 @@ async function loadPhotos() {
                         <button class="btn secondary text-btn" onclick="openEditModal('${docSnap.id}', '${data.title}', '${data.image}')">
                             <i class="fa-solid fa-pen"></i> Editar
                         </button>
-                        <button class="btn danger-btn" onclick="deletePhoto('${docSnap.id}', '${data.image}')">
+                        <button class="btn danger-btn" onclick="deletePhoto('${docSnap.id}')">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -192,18 +207,12 @@ async function loadPhotos() {
 }
 
 // --- DELETE PHOTO ---
-window.deletePhoto = async function(docId, imageUrl) {
+window.deletePhoto = async function(docId) {
     if (confirm("Tem certeza que deseja excluir esta foto permanentemente?")) {
         try {
             await deleteDoc(doc(db, "portfolio", docId));
-            
-            const baseUrl = "https://firebasestorage.googleapis.com/v0/b/";
-            if (imageUrl.includes(baseUrl)) {
-                let filePath = imageUrl.split('/o/')[1].split('?alt=media')[0];
-                filePath = decodeURIComponent(filePath);
-                const fileRef = ref(storage, filePath);
-                await deleteObject(fileRef);
-            }
+            // Obs: Com ImgBB, a exclusão da imagem no servidor deles não é suportada por API de forma simples. 
+            // Apenas removemos do banco de dados, o que é o suficiente.
             loadPhotos();
         } catch (error) {
             alert("Erro ao excluir: " + error.message);
@@ -247,7 +256,6 @@ editForm.addEventListener('submit', async (e) => {
     
     const docId = editDocId.value;
     const newTitle = editPhotoTitle.value;
-    const oldImageUrl = editOldImageUrl.value;
     const newFile = editPhotoFile.files[0];
     
     btnSaveEdit.disabled = true;
@@ -261,44 +269,24 @@ editForm.addEventListener('submit', async (e) => {
             closeEditModal();
             loadPhotos();
         } else {
-            // Fazer upload da nova imagem
+            // Fazer upload da nova imagem para ImgBB
             editProgressContainer.style.display = 'block';
-            const fileRef = ref(storage, `portfolio/${Date.now()}_${newFile.name}`);
-            const uploadTask = uploadBytesResumable(fileRef, newFile);
+            editProgressStatus.innerText = 'Enviando para ImgBB...';
+            
+            const imageUrl = await uploadToImgBB(newFile, (percent) => {
+                editProgressBar.style.width = percent + '%';
+            });
+            
+            editProgressStatus.innerText = 'Salvando no banco de dados...';
 
-            uploadTask.on('state_changed', 
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    editProgressBar.style.width = progress + '%';
-                    editProgressStatus.innerText = `Atualizando... ${Math.round(progress)}%`;
-                }, 
-                (error) => {
-                    alert("Erro no upload: " + error.message);
-                    btnSaveEdit.disabled = false;
-                }, 
-                async () => {
-                    editProgressStatus.innerText = 'Salvando...';
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    
-                    // Atualiza banco com novo título e imagem
-                    await updateDoc(doc(db, "portfolio", docId), {
-                        title: newTitle,
-                        image: downloadURL
-                    });
-                    
-                    // Deleta a imagem antiga do Storage
-                    const baseUrl = "https://firebasestorage.googleapis.com/v0/b/";
-                    if (oldImageUrl.includes(baseUrl)) {
-                        let filePath = oldImageUrl.split('/o/')[1].split('?alt=media')[0];
-                        filePath = decodeURIComponent(filePath);
-                        const oldFileRef = ref(storage, filePath);
-                        deleteObject(oldFileRef).catch(console.error); // Não precisa bloquear se falhar
-                    }
+            // Atualiza banco com novo título e imagem
+            await updateDoc(doc(db, "portfolio", docId), {
+                title: newTitle,
+                image: imageUrl
+            });
 
-                    closeEditModal();
-                    loadPhotos();
-                }
-            );
+            closeEditModal();
+            loadPhotos();
         }
     } catch (error) {
         alert("Erro ao editar: " + error.message);
