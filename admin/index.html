@@ -4,62 +4,122 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Fotógrafo - RC Sport</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin.css">
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- TELA DE LOGIN -->
     <div id="login-container" class="container">
-        <div class="card">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fa-solid fa-camera-retro"></i>
+            </div>
             <h2>Acesso Restrito</h2>
+            <p>Gerenciamento do Portfólio 3D</p>
             <form id="login-form">
                 <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" id="email" required placeholder="seu@email.com">
+                    <input type="email" id="email" required placeholder="E-mail">
                 </div>
                 <div class="form-group">
-                    <label>Senha</label>
-                    <input type="password" id="password" required placeholder="••••••••">
+                    <input type="password" id="password" required placeholder="Senha">
                 </div>
-                <button type="submit" id="btn-login" class="btn primary">Entrar</button>
+                <button type="submit" id="btn-login" class="btn primary-btn"><i class="fa-solid fa-right-to-bracket"></i> Entrar no Painel</button>
             </form>
             <p id="login-error" class="error-msg"></p>
         </div>
     </div>
 
-    <div id="dashboard-container" class="container" style="display: none;">
-        <div class="card wide">
-            <div class="header">
-                <h2>Suas Fotos</h2>
-                <button id="btn-logout" class="btn secondary">Sair</button>
+    <!-- TELA PRINCIPAL (DASHBOARD) -->
+    <div id="dashboard-container" style="display: none;">
+        
+        <!-- Sidebar / Header Superior -->
+        <header class="dashboard-header">
+            <div class="header-logo">
+                <i class="fa-solid fa-camera-retro"></i> RC Sport Admin
             </div>
-            
-            <div class="upload-section">
-                <h3>Adicionar Nova Foto</h3>
-                <form id="upload-form">
-                    <div class="form-group">
-                        <label>Título (ex: Ação, Foco, Bastidores)</label>
-                        <input type="text" id="photo-title" required placeholder="Digite um título curto">
-                    </div>
-                    <div class="form-group file-group">
-                        <label for="photo-file" class="file-label">Escolher Imagem</label>
-                        <input type="file" id="photo-file" accept="image/png, image/jpeg, image/webp" required>
-                        <span id="file-name">Nenhum arquivo escolhido</span>
-                    </div>
-                    <button type="submit" id="btn-upload" class="btn primary">Fazer Upload e Publicar</button>
-                </form>
-                <div id="upload-progress-container" style="display: none;">
-                    <div class="progress-bar"><div id="upload-progress"></div></div>
-                    <p id="upload-status">Enviando...</p>
-                </div>
-            </div>
+            <button id="btn-logout" class="btn text-btn"><i class="fa-solid fa-power-off"></i> Sair</button>
+        </header>
 
-            <div class="gallery-list">
-                <h3>Fotos Publicadas (Portfólio)</h3>
-                <ul id="photos-list">
-                    <!-- Fotos aparecerão aqui -->
-                    <p class="loading-text">Carregando fotos...</p>
-                </ul>
+        <main class="dashboard-content">
+            <!-- Coluna Esquerda: Upload -->
+            <section class="upload-section card">
+                <h3><i class="fa-solid fa-cloud-arrow-up"></i> Adicionar ao Portfólio</h3>
+                <form id="upload-form">
+                    
+                    <div class="form-group">
+                        <label>Título da Obra</label>
+                        <input type="text" id="photo-title" required placeholder="Ex: Foco Absoluto">
+                    </div>
+
+                    <div class="upload-zone" id="upload-zone">
+                        <input type="file" id="photo-file" accept="image/png, image/jpeg, image/webp" required>
+                        <div class="upload-zone-content" id="upload-zone-content">
+                            <i class="fa-solid fa-image"></i>
+                            <p>Clique ou arraste a imagem aqui</p>
+                            <span>PNG, JPG ou WEBP</span>
+                        </div>
+                        <img id="image-preview" class="image-preview" src="" alt="Preview" style="display: none;">
+                    </div>
+
+                    <button type="submit" id="btn-upload" class="btn primary-btn w-100">
+                        <i class="fa-solid fa-paper-plane"></i> Publicar Foto
+                    </button>
+                </form>
+
+                <div id="upload-progress-container" class="progress-container" style="display: none;">
+                    <div class="progress-bar"><div id="upload-progress"></div></div>
+                    <p id="upload-status">Enviando... 0%</p>
+                </div>
+            </section>
+
+            <!-- Coluna Direita: Galeria Ativa -->
+            <section class="gallery-section card">
+                <div class="section-header">
+                    <h3><i class="fa-solid fa-images"></i> Fotos Ativas no Site</h3>
+                </div>
+                
+                <div class="gallery-grid" id="photos-list">
+                    <!-- Cards de foto serão injetados aqui via JS -->
+                    <p class="loading-text"><i class="fa-solid fa-spinner fa-spin"></i> Carregando galeria...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL DE EDIÇÃO -->
+    <div id="edit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Editar Foto</h3>
+                <button id="btn-close-modal" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <form id="edit-form">
+                <input type="hidden" id="edit-doc-id">
+                <input type="hidden" id="edit-old-image-url">
+                
+                <div class="form-group">
+                    <label>Título da Obra</label>
+                    <input type="text" id="edit-photo-title" required>
+                </div>
+
+                <div class="upload-zone edit-zone" id="edit-upload-zone">
+                    <input type="file" id="edit-photo-file" accept="image/png, image/jpeg, image/webp">
+                    <img id="edit-image-preview" class="image-preview" src="" alt="Preview">
+                    <div class="edit-overlay-text">Clique para trocar a imagem</div>
+                </div>
+
+                <div id="edit-progress-container" class="progress-container" style="display: none;">
+                    <div class="progress-bar"><div id="edit-progress"></div></div>
+                    <p id="edit-status">Atualizando... 0%</p>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="btn-cancel-edit" class="btn text-btn">Cancelar</button>
+                    <button type="submit" id="btn-save-edit" class="btn primary-btn"><i class="fa-solid fa-floppy-disk"></i> Salvar Alterações</button>
+                </div>
+            </form>
         </div>
     </div>
 
