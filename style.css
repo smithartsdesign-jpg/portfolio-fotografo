@@ -341,7 +341,7 @@ section {
 .about {
     background-color: #0a0a0a; /* Fundo escuro */
     color: #fff;
-    padding: 6rem 10% 8rem; /* Adicionado padding-top para o conteúdo não ficar esmagado no topo */
+    padding: 6rem 10% 4rem; /* Reduzido o padding-bottom */
     position: relative;
     z-index: 30; /* Maior que o do portfolio (20) para a sombra da foto não vazar por cima */
 }
@@ -349,7 +349,7 @@ section {
 .about-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6rem; /* Aumentado para respirar melhor */
+    gap: 3rem; /* Reduzido o espaçamento entre foto e texto */
     align-items: center;
 }
 
@@ -360,7 +360,7 @@ section {
     overflow: hidden;
     border-radius: 8px; /* Leve arredondamento mais premium que o antigo */
     box-shadow: 0 30px 60px rgba(0,0,0,0.6); /* Sombra macia e profunda */
-    max-width: 400px; /* Foto menor */
+    max-width: 350px; /* Foto um pouco menor para ajudar no espaçamento */
     margin-left: auto; /* Empurra a foto para perto do texto na direita */
 }
 
@@ -420,6 +420,7 @@ section {
     display: flex;
     align-items: center;
     min-height: 60vh; /* Altura mínima para a foto ter espaço de sobra */
+    z-index: 30; /* IMPORTANTE: Cobre o portfolio que ficou preso embaixo */
 }
 
 /* FOTO CTA (Aparecendo do rodapé) */
@@ -505,6 +506,8 @@ section {
     padding: 4rem 10% 2rem;
     background-color: var(--accent-color);
     border-top: 1px solid rgba(255,255,255,0.05);
+    position: relative;
+    z-index: 30;
 }
 
 .footer-content {
