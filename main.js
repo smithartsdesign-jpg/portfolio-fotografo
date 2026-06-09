@@ -483,41 +483,34 @@ function setupScrollAnimations(g1, g2, particles) {
         }
     );
 
-    // Animação Palavra por Palavra do CTA surgindo de trás do fotógrafo
-    gsap.fromTo('.cta-title .word', 
-        { x: 100, opacity: 0, filter: "blur(20px)" }, // Começam borradas e escondidas à direita (atrás da foto)
+    // TEXTO DO CTA: Vem da esquerda, amarrado ao scroll
+    gsap.fromTo('.cta-content', 
+        { x: "-100vw", opacity: 0 }, // Fora da tela na esquerda
         {
             scrollTrigger: {
                 trigger: '.cta',
-                start: "top 75%",
-                toggleActions: "play none none reverse"
+                start: "top 90%",     // Começa quando a seção está quase entrando
+                end: "center center", // Termina quando a seção chega no meio da tela
+                scrub: 1              // Efeito amarrado à rolagem com 1s de suavização
             },
-            x: 0, // Voltam para a esquerda
+            x: 0,
             opacity: 1,
-            filter: "blur(0px)",
-            stagger: 0.15, // Efeito cascata (uma palavra por vez)
-            duration: 1.2,
-            ease: "power3.out"
+            ease: "power2.out"
         }
     );
 
-    // ESMAECER O PORTFOLIO AO CHEGAR NO ABOUT FOI REMOVIDO A PEDIDO DO USUÁRIO
-
-
-    // FOTO CTA: Surgindo de trás do rodapé (scale + position + blur)
+    // FOTO DO CTA: Vem da direita, amarrado ao scroll
     gsap.fromTo('.photographer-cta',
-        { y: 300, scale: 0.8, filter: "blur(20px)", opacity: 0 },
+        { x: "100vw", opacity: 0 }, // Fora da tela na direita
         {
             scrollTrigger: {
                 trigger: '.cta',
-                start: "top 75%",
-                toggleActions: "play none none reverse"
+                start: "top 90%",
+                end: "center center",
+                scrub: 1
             },
-            y: 0,
-            scale: 1,
-            filter: "blur(0px)",
-            opacity: 1, // Opacidade 100% para a foto brilhar ao lado do texto
-            duration: 2.5, // Movimento lento e dramático
+            x: 0,
+            opacity: 1,
             ease: "power2.out"
         }
     );
