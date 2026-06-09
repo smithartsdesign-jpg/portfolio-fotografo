@@ -355,9 +355,6 @@ function setupScrollAnimations(g1, g2, particles) {
                 galleryGrid.appendChild(div);
             });
 
-            // Atualizar o GSAP agora que as tags existem
-            ScrollTrigger.refresh();
-
             const galleryItemsArray = gsap.utils.toArray('.gallery-item');
             
             // Corrige o cálculo de rolagem se houver poucas fotos (não rola se couber na tela)
@@ -435,8 +432,10 @@ function setupScrollAnimations(g1, g2, particles) {
         }
     }
     
-    // Executa a função
-    carregarPortfolio();
+    // Executa a função e atualiza o GSAP após finalizar
+    carregarPortfolio().then(() => {
+        ScrollTrigger.refresh();
+    });
 
     // Parallax da foto do About no scroll (A imagem se move dentro do contêiner)
     gsap.to('.about-image img', {
