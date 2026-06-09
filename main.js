@@ -298,7 +298,7 @@ function setupScrollAnimations(g1, g2, particles) {
     0);
 
     // TIMELINE 2: REVELAÇÃO DO PORTFOLIO (Transição Contínua e Bonita)
-    gsap.set('.gallery-item', { scale: 0.5 }); // Inicia menor para a expansão dramática
+
 
     const tlPortfolio = gsap.timeline({
         paused: true, // Começa pausada, será controlada pelos callbacks
@@ -358,7 +358,12 @@ function setupScrollAnimations(g1, g2, particles) {
             ScrollTrigger.refresh();
 
             const galleryItemsArray = gsap.utils.toArray('.gallery-item');
-            const getScrollAmount = () => -(galleryGrid.scrollWidth - window.innerWidth + window.innerWidth * 0.1);
+            
+            // Corrige o cálculo de rolagem se houver poucas fotos (não rola se couber na tela)
+            const getScrollAmount = () => {
+                let amount = galleryGrid.scrollWidth - window.innerWidth + (window.innerWidth * 0.1);
+                return amount > 0 ? -amount : 0;
+            };
 
             const horizontalTween = gsap.to(galleryGrid, {
                 x: getScrollAmount,
@@ -368,13 +373,14 @@ function setupScrollAnimations(g1, g2, particles) {
             ScrollTrigger.create({
                 trigger: '.portfolio',
                 start: 'top top',
-                end: () => `+=${galleryGrid.scrollWidth}`, 
+                end: () => `+=${Math.max(galleryGrid.scrollWidth, window.innerWidth)}`, 
                 pin: true,
                 animation: horizontalTween,
                 scrub: 1, 
                 invalidateOnRefresh: true 
             });
 
+            // Anima as fotos para aparecerem assim que a galeria é revelada
             galleryItemsArray.forEach((item, i) => {
                 gsap.set(item, { 
                     y: 800, 
@@ -396,10 +402,10 @@ function setupScrollAnimations(g1, g2, particles) {
                     scale: 1,
                     ease: "back.out(1.2)",
                     duration: 1.5,
+                    delay: i * 0.1, // Efeito cascata lindo
                     scrollTrigger: {
-                        trigger: item,
-                        containerAnimation: horizontalTween, 
-                        start: "left 85%", 
+                        trigger: '.portfolio',
+                        start: "top 30%", 
                         toggleActions: "play none none reverse"
                     }
                 });
