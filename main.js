@@ -363,16 +363,32 @@ function setupScrollAnimations(g1, g2, particles) {
                 return amount > 0 ? -amount : 0;
             };
 
+            // Calcula a distância do scroll horizontal
+            const scrollDistance = Math.max(galleryGrid.scrollWidth, window.innerWidth);
+
+            // Ajusta o .about para subir sobre a galeria no final do pino
+            gsap.set('.about', { marginTop: -window.innerHeight });
+
             const horizontalTween = gsap.to(galleryGrid, {
                 x: getScrollAmount,
                 ease: "none"
             });
 
+            // 1. O PINO (Dura o scroll horizontal + 1 tela inteira para o sobrepor)
             ScrollTrigger.create({
                 trigger: '.portfolio',
                 start: 'top top',
-                end: () => `+=${Math.max(galleryGrid.scrollWidth, window.innerWidth)}`, 
+                end: () => `+=${scrollDistance + window.innerHeight}`, 
                 pin: true,
+                pinSpacing: true, 
+                invalidateOnRefresh: true 
+            });
+
+            // 2. A ANIMAÇÃO HORIZONTAL (Dura apenas o scroll horizontal)
+            ScrollTrigger.create({
+                trigger: '.portfolio',
+                start: 'top top',
+                end: () => `+=${scrollDistance}`, 
                 animation: horizontalTween,
                 scrub: 1, 
                 invalidateOnRefresh: true 
