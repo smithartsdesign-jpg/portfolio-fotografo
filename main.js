@@ -490,13 +490,13 @@ function setupScrollAnimations(g1, g2, particles) {
     gsap.to('.portfolio-header, .gallery-grid', {
         scrollTrigger: {
             trigger: '.about',
-            start: "top 70%", 
-            end: "top 20%", 
+            start: "top 40%", // Só começa a borrar quando a seção 'Sobre' já estiver bem visível na tela
+            end: "top 10%", 
             scrub: true
         },
-        opacity: 0.4, // Não some completamente, fica à mostra
-        filter: "blur(5px)", // O blur agora é aplicado nos filhos, sem conflito com o pai
-        y: -30 
+        opacity: 0.5, 
+        filter: "blur(3px)", // Blur bem mais suave
+        y: -20 
     });
 
     // FOTO CTA: Surgindo de trás do rodapé (scale + position + blur)
