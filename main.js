@@ -466,20 +466,19 @@ function setupScrollAnimations(g1, g2, particles) {
     });
 
     // ANIMAÇÕES DA SEÇÃO ABOUT (FOTO E TEXTOS SEPARADOS)
-    // "Vir um pouco mais para cima com animação em cada texto"
+    // Animação de entrada do About (Ramp up)
     gsap.fromTo('.about-image, .about-text h2, .about-text p', 
-        { opacity: 0, y: 150, filter: "blur(15px)" },
+        { opacity: 0, y: 100 },
         { 
             scrollTrigger: {
                 trigger: '.about',
-                start: "top 80%",
+                start: "top 70%", // Um pouco mais tarde para garantir que a seção escura já cobriu a tela
                 toggleActions: "play none none reverse"
             },
             opacity: 1, 
             y: 0, 
-            filter: "blur(0px)",
             duration: 1.2, 
-            stagger: 0.25, // Efeito cascata: primeiro a foto, depois o H2, depois o P
+            stagger: 0.2,
             ease: "power3.out" 
         }
     );

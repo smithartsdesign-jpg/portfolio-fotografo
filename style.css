@@ -339,9 +339,9 @@ section {
 
 /* ABOUT */
 .about {
-    background-color: #f4f4f5; /* Fundo sólido para sobrepor a galeria */
-    color: #111;
-    padding: 0rem 10% 8rem; /* Reduzido o topo para colar mais no portfolio */
+    background-color: #0a0a0a; /* Fundo escuro */
+    color: #fff;
+    padding: 6rem 10% 8rem; /* Adicionado padding-top para o conteúdo não ficar esmagado no topo */
     position: relative;
     z-index: 30; /* Maior que o do portfolio (20) para a sombra da foto não vazar por cima */
 }
@@ -359,7 +359,9 @@ section {
     aspect-ratio: 3/4; /* Força a proporção elegante para fotos de retrato */
     overflow: hidden;
     border-radius: 8px; /* Leve arredondamento mais premium que o antigo */
-    box-shadow: 0 30px 60px rgba(0,0,0,0.15); /* Sombra macia e profunda */
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6); /* Sombra macia e profunda */
+    max-width: 400px; /* Foto menor */
+    margin-left: auto; /* Empurra a foto para perto do texto na direita */
 }
 
 .about-image img {
@@ -400,11 +402,11 @@ section {
 }
 
 .about-text h2 {
-    color: #111;
+    color: #fff;
 }
 
 .about-text p {
-    color: #555;
+    color: #aaa;
 }
 
 /* CTA */
