@@ -486,18 +486,8 @@ function setupScrollAnimations(g1, g2, particles) {
         }
     );
 
-    // ESMAECER O PORTFOLIO AO CHEGAR NO ABOUT
-    gsap.to('.portfolio-header, .gallery-grid', {
-        scrollTrigger: {
-            trigger: '.about',
-            start: "top 40%", // Só começa a borrar quando a seção 'Sobre' já estiver bem visível na tela
-            end: "top 10%", 
-            scrub: true
-        },
-        opacity: 0.5, 
-        filter: "blur(3px)", // Blur bem mais suave
-        y: -20 
-    });
+    // ESMAECER O PORTFOLIO AO CHEGAR NO ABOUT FOI REMOVIDO A PEDIDO DO USUÁRIO
+
 
     // FOTO CTA: Surgindo de trás do rodapé (scale + position + blur)
     gsap.fromTo('.photographer-cta',
