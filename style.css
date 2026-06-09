@@ -339,11 +339,11 @@ section {
 
 /* ABOUT */
 .about {
-    background-color: transparent; /* Remove o corte seco de cor */
+    background-color: #f4f4f5; /* Fundo sólido para sobrepor a galeria */
     color: #111;
     padding: 0rem 10% 8rem; /* Reduzido o topo para colar mais no portfolio */
     position: relative;
-    z-index: 10;
+    z-index: 30; /* Maior que o do portfolio (20) para a sombra da foto não vazar por cima */
 }
 
 .about-grid {
