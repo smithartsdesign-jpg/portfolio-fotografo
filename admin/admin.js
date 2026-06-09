@@ -54,10 +54,11 @@ const editProgressStatus = document.getElementById('edit-status');
 const btnSaveEdit = document.getElementById('btn-save-edit');
 
 // --- AUTHENTICATION ---
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user) {
         loginContainer.style.display = 'none';
         dashboardContainer.style.display = 'flex';
+        await checkAndMigrateOrder();
         loadPhotos();
     } else {
         loginContainer.style.display = 'flex';
@@ -143,7 +144,8 @@ uploadForm.addEventListener('submit', async (e) => {
         await addDoc(collection(db, "portfolio"), {
             title: title,
             image: imageUrl,
-            createdAt: new Date()
+            createdAt: new Date(),
+            order: Date.now() // Vai automaticamente pro final da fila
         });
 
         resetUploadForm();
@@ -165,12 +167,45 @@ function resetUploadForm() {
     progressBar.style.width = '0%';
 }
 
-// --- LOAD PHOTOS ---
+// --- LOAD E ORDENAÇÃO DAS FOTOS ---
+let sortableInstance = null;
+
+async function checkAndMigrateOrder() {
+    // Garante que fotos antigas tenham o campo 'order' para não sumirem da galeria
+    const q = query(collection(db, "portfolio"));
+    const snapshot = await getDocs(q);
+    let needsMigration = false;
+    let docsToMigrate = [];
+    
+    snapshot.forEach(doc => {
+        if (doc.data().order === undefined) needsMigration = true;
+        docsToMigrate.push({ id: doc.id, data: doc.data() });
+    });
+
+    if (needsMigration) {
+        console.log("Migrando fotos antigas para novo sistema de ordem...");
+        // Ordena pela data de criação antiga (mais novas primeiro)
+        docsToMigrate.sort((a, b) => {
+            const timeA = a.data.createdAt ? a.data.createdAt.toMillis() : 0;
+            const timeB = b.data.createdAt ? b.data.createdAt.toMillis() : 0;
+            return timeB - timeA;
+        });
+        
+        // Aplica a ordem sequencial
+        let promises = [];
+        for (let i = 0; i < docsToMigrate.length; i++) {
+            promises.push(updateDoc(doc(db, "portfolio", docsToMigrate[i].id), { order: i }));
+        }
+        await Promise.all(promises);
+    }
+}
+
 async function loadPhotos() {
     photosList.innerHTML = '<p class="loading-text"><i class="fa-solid fa-spinner fa-spin"></i> Carregando galeria...</p>';
     
     try {
-        const q = query(collection(db, "portfolio"), orderBy("createdAt", "desc"));
+        // Agora ordenamos pelo campo 'order'
+        const q = query(collection(db, "portfolio"), orderBy("order", "asc"));
         const querySnapshot = await getDocs(q);
         
         photosList.innerHTML = '';
@@ -180,11 +215,14 @@ async function loadPhotos() {
             return;
         }
 
+        let index = 1;
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const div = document.createElement('div');
             div.className = 'photo-card';
+            div.dataset.id = docSnap.id; // Necessário para o drag & drop
             div.innerHTML = `
+                <div class="order-badge">#${index}</div>
                 <img src="${data.image}" alt="${data.title}" class="photo-card-img">
                 <div class="photo-card-info">
                     <div class="photo-card-title">${data.title}</div>
@@ -199,10 +237,50 @@ async function loadPhotos() {
                 </div>
             `;
             photosList.appendChild(div);
+            index++;
         });
+
+        // Inicializa o SortableJS para Drag and Drop
+        if (sortableInstance) sortableInstance.destroy();
+        sortableInstance = new Sortable(photosList, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: saveNewOrder
+        });
+
     } catch (error) {
-        photosList.innerHTML = '<p class="error-msg">Erro ao carregar fotos.</p>';
+        photosList.innerHTML = '<p class="error-msg">Erro ao carregar fotos. Talvez o Firebase precise de um tempo para criar os índices.</p>';
         console.error(error);
+    }
+}
+
+async function saveNewOrder() {
+    const cards = document.querySelectorAll('.photo-card');
+    
+    // Feedback visual rápido
+    const oldHtml = photosList.innerHTML;
+    photosList.innerHTML = '<p class="loading-text"><i class="fa-solid fa-spinner fa-spin"></i> Salvando nova ordem no banco de dados...</p>';
+
+    try {
+        let orderPromises = [];
+        cards.forEach((card, index) => {
+            const docId = card.dataset.id;
+            const promise = updateDoc(doc(db, "portfolio", docId), {
+                order: index
+            });
+            orderPromises.push(promise);
+        });
+        
+        // Executa todas as atualizações de forma paralela
+        await Promise.all(orderPromises);
+        
+        // Recarrega as fotos para re-renderizar com as badges (#1, #2...) corretas
+        loadPhotos();
+    } catch (error) {
+        console.error("Erro ao salvar nova ordem:", error);
+        alert("Erro ao salvar nova ordem.");
+        photosList.innerHTML = oldHtml;
+        loadPhotos();
     }
 }
 

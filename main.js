@@ -336,7 +336,8 @@ function setupScrollAnimations(g1, g2, particles) {
         }
 
         try {
-            const q = query(collection(db, "portfolio"), orderBy("createdAt", "desc"));
+            // Usa o novo campo 'order' para exibir na ordem que o usuário definiu no painel
+            const q = query(collection(db, "portfolio"), orderBy("order", "asc"));
             const querySnapshot = await getDocs(q);
             
             // Criar e injetar as fotos no HTML
