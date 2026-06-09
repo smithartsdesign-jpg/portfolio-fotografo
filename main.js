@@ -487,17 +487,16 @@ function setupScrollAnimations(g1, g2, particles) {
     );
 
     // ESMAECER O PORTFOLIO AO CHEGAR NO ABOUT
-    // "Demorar um pouco mais para borrar": mudado start para "top 60%" (borra só quando o About sobe mais na tela)
-    gsap.to('.portfolio', {
+    gsap.to('.portfolio-header, .gallery-grid', {
         scrollTrigger: {
             trigger: '.about',
-            start: "top 70%", // Atraso de disparo, começa um pouco depois
+            start: "top 70%", 
             end: "top 20%", 
             scrub: true
         },
-        opacity: 0.6, // Não some completamente, fica à mostra
-        filter: "blur(5px)", // Leve efeito de blur apenas
-        y: -30 // Puxa menos para não gerar um espaço gigante
+        opacity: 0.4, // Não some completamente, fica à mostra
+        filter: "blur(5px)", // O blur agora é aplicado nos filhos, sem conflito com o pai
+        y: -30 
     });
 
     // FOTO CTA: Surgindo de trás do rodapé (scale + position + blur)
